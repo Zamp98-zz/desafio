@@ -7,22 +7,19 @@
 import math
 import statistics
 
-def getMaisNova(dados):
-    idade = 500 #uma idade que nenhum ser humano consegue viver
-    for i in range(1, len(dados)):#variável inicializada em 1 para ignorar o índice
-        temp = int(dados[i])
-        if(idade >= temp):
-            idade = temp
-    return idade
+def getMaior(dados):
+    x = int(dados[1])
+    for i in range(2, len(dados)):
+        if x < int(dados[i]):
+            x = int(dados[i])
+    return x
 
-def getMaisVelho(dados):
-    idade = 0  # a idade minima possível
-    for i in range(1, len(dados)):  # variável inicializada em 1 para ignorar o índice
-        temp = int(dados[i])
-        if (idade <= temp):
-            idade = temp
-    return idade
-
+def getMenor(dados):
+    x = int(dados[1])
+    for i in range(2, len(dados)):
+        if x > int(dados[i]):
+            x = int(dados[i])
+    return x
 def linhaColunaBase(conteudo):
     coluna = len(conteudo[0])
     linha = len(conteudo) - 1 #desconsiderando o indice da tabela
@@ -31,12 +28,12 @@ def linhaColunaBase(conteudo):
 def frequenciaDados(conteudo):
     resultado = []
     referencia = getDistinct(conteudo)
-    for indice in referencia:
+    for j in range(len(referencia)):
         count = 0
-        for linha in conteudo:
-            if linha in indice:
+        for i in range(len(conteudo)):
+            if conteudo[i] == referencia[j]:
                 count+=1
-        resultado.append([indice, count])
+        resultado.append([referencia[j], count])
     return resultado
 
 def simetria(moda, media):
@@ -83,7 +80,7 @@ def adicionaFaixaEtaria(nomeArquivo):
 def getDistinct(conteudo):
     temp = []
     for linha in conteudo:
-        if not str(linha) in temp:
+        if not linha in temp:
             try:
                 x = int(linha)
                 temp.append(x)
@@ -107,10 +104,11 @@ def getModa(dados):
 
 def buscaColuna(indice, valor):
     coluna = []
-    for i in range(len(indice)):
-        if valor in indice[i]:
-            coluna.append(i)
-    return coluna
+    if(len(indice) > 0):
+        for i in range(len(indice)):
+            if valor in indice[i]:
+                coluna.append(i)
+        return coluna
 
 def getMedia(dados, consideraNulo):
     soma = 0
@@ -126,7 +124,9 @@ def getMedia(dados, consideraNulo):
     return media
     
 def getMediana(dados):
-    vetOrdenado = sorted(dados)
+    temp = dados.copy()
+    #temp.pop(0)
+    vetOrdenado = sorted(temp)
     vMeio = []
     qAmostras = len(vetOrdenado)
     meio = qAmostras // 2
@@ -145,14 +145,17 @@ def getMatrizColuna(dados, coluna):
     temp = dados
     col = []
     #temp.pop(0) #tirando o índice
-    for linha in temp:
-        x = 0
-        try:
-            x = int(linha[coluna])
-            col.append(x)
-        except:
-            col.append(linha[coluna])
-    return col
+    if(len(dados) > 0):
+        for linha in temp:
+            x = 0
+            try:
+                x = int(linha[coluna])
+                col.append(x)
+            except:
+                if(linha[coluna] != ''):
+                    col.append(linha[coluna])
+        return col
+
 def escreveArquivo(conteudo, nomeArquivo):
     arquivo = open(nomeArquivo, "w")
     for j in range(len(conteudo)):
@@ -165,18 +168,34 @@ def escreveArquivo(conteudo, nomeArquivo):
     arquivo.close()
     return True
 
-def quartil(dados, tipo):
+def quartil(dado, tipo):
+    dados = dado.copy()
+    mediana = getMediana(dados)
     if(tipo ==  1):
-        print("TODO")
+        amostra = []
+        for i in range(len(dados)):
+            x = int(dados[i])
+            if x <= mediana:
+                amostra.append(x)
+        q1 = getMediana(amostra)
+        return q1
     elif(tipo == 2):
-        print("TODO")
+        return mediana
     elif(tipo ==  3):
-        print("TODO")
-    else:
-        print("TODO")
+        amostra = []
+        for i in range(len(dados)):
+            x = int(dados[i])
+            if x >= mediana:
+                amostra.append(x)
+        q3 = getMediana(amostra)
+        return q3
 
 def deltaV(dados):
-    print("TODO")
+    dp = desvioPadrao(dados, False)
+    media = getMedia(dados, False)
+    cv = dp/media
+    cv = cv * 100
+    return cv
 
 def desvioPadrao(dados, consideraNulo):
     temp = dados
@@ -196,12 +215,37 @@ def desvioPadrao(dados, consideraNulo):
     somatorio = math.sqrt(somatorio)
     return somatorio
 
+def getMatrizRegiao(dados, regiao):
+    matriz = []
+    for linha in dados:
+        if regiao in linha:
+            matriz.append(linha)
+    return matriz
+
+def desvioRendaPorRegiao(dados, reg):#recebe matriz de dados e um vetor de regiões
+    resultado = []
+    v = dados.copy()
+    v.pop(0)
+    for regiao in reg:
+        temp = []
+        for linha in v:
+            if regiao in linha:
+                temp.append(linha)
+        r = buscaColuna(dados[0], "renda total de todos os moradores")
+        if(len(temp) > 0):
+            aux = getMatrizColuna(temp, r[0])
+            resultado.append([regiao, desvioPadrao(aux, False)])
+    return resultado
 def main():
+    respostas = open("respostas.txt", "w")
     nomeArquivo = "base_ipea.csv"
     conteudo = lerArquivo(nomeArquivo)
-    print("Conteúdo: ",conteudo[0])
+    #print("Conteúdo: ",conteudo[0])
     # c) A base é composta por quantas linhas e colunas?
     linhaColuna = linhaColunaBase(conteudo)
+    respostas.writelines(["Questão C:\n", "Linhas: ",str(linhaColuna[0]), " Colunas: ", str(linhaColuna[1]),"\n"])
+
+    print("Questão C:")
     print("Linhas: ",linhaColuna[0], "Colunas: ", linhaColuna[1])
     # d) Calcule a frequência de pessoas em cada região do Brasil.
     colunaRegiao = getMatrizColuna(conteudo, 0)
@@ -210,9 +254,22 @@ def main():
     #frequencia = frequenciaDados(conteudo, 0, referencia)
     #print("Frequência: ",frequencia)
     # e) Qual é a região mais frequente (moda)?
+
+
+    print("Questão D:")
+    respostas.writelines(["Questão D:\n"])
+    freqReg = frequenciaDados(colunaRegiao)
+    freqReg.pop(0)
+    for linha in freqReg:
+        print("Região:",linha[0]+",","frequência:",linha[1])
+        respostas.writelines(["Região: ",str(linha[0])+","," frequência: ",str(linha[1]),"\n"])
+    print("Questão E:")
     maiorFrequencia = getModa(colunaRegiao)
     print("Região mais frequente: ",maiorFrequencia[0][0]+",", "Frequência:", maiorFrequencia[0][1])
     # f) Qual é a idade da pessoa mais nova nessa amostra? E da mais velha?
+
+
+    print("Questão F:")
     valor = "idade"
     #print("conteudo",conteudo[0])
     res = buscaColuna(conteudo[0], valor)
@@ -221,28 +278,80 @@ def main():
 
     colunaIdade = getMatrizColuna(conteudo, res[0])
     #print("coluna(s) correspondente(s) à busca:", valor, res)
-    maisNova = getMaisNova(colunaIdade)
+    maisNova = getMenor(colunaIdade)
     print("Idade da pessoa mais nova:", maisNova)
-    maisVelha = getMaisVelho(colunaIdade)
+    maisVelha = getMaior(colunaIdade)
     print("Idade da pessoa mais velha:", maisVelha)
+    respostas.writelines(["Questão F:\n", "Idade da pessoa mais nova: ", str(maisNova), " Idade da pessoa mais velha:", str(maisVelha),"\n"])
+
+
+    print("Questão G:")
     mediaIdade = getMedia(colunaIdade, 0)
     ci = getMatrizColuna(conteudo, res[0])
     ci.pop(0)
-    print(ci)
-    print("Media de idade: ", mediaIdade, statistics.mean(ci))
+    #print(ci)
+    print("Media de idade: ", mediaIdade)
     modaIdade = getModa(colunaIdade)
-    print("Moda: ", modaIdade[0][0]+",", "Frequência:", modaIdade[0][1])
-    medianaIdade = getMediana(colunaIdade)
-    svec = sorted(colunaIdade)
-    print("Mediana:", medianaIdade)
+    print("Moda da idade: ", str(modaIdade[0][0])+",", "Frequência:", str(modaIdade[0][1]))
+    ci = colunaIdade.copy()
+    ci.pop(0)
+    medianaIdade = getMediana(ci)
+    print("Mediana da idade:", medianaIdade)
     x = int(modaIdade[0][0])
     print(simetria(x, mediaIdade))
+    respostas.writelines(["Questão G:\n","Media de idade: ", str(mediaIdade),"\nModa da idade: ",str(modaIdade[0][0]), " Frequência: ", str(modaIdade[0][1]),"\nMediana da idade: ", str(medianaIdade),"\n"])
+
+
+    print("Questão H:")
     conteudo = adicionaFaixaEtaria(nomeArquivo)
+    colunaFaixaEtaria = buscaColuna(conteudo[0], "Faixa etária")
+    #print("Faixa etária:", colunaFaixaEtaria)
+    modaFaixa = getModa(getMatrizColuna(conteudo, colunaFaixaEtaria[0]))
+    print("Faixa etária mais frequente: ", modaFaixa[0][0]+',',"Frequência: ", modaFaixa[0][1])
     arqSaida = "tabela_modificada.csv"
     #if(escreveArquivo(conteudo, arqSaida)):
-        #print("A tabela foi modificada e salva como:", arqSaida)
+     #   print("A tabela foi modificada e salva como:", arqSaida)
+    respostas.writelines(["Questão H:\n","Faixa etária mais frequente: ", str(modaFaixa[0][0])+','," Frequência: ", str(modaFaixa[0][1]),"\n"])
+    '''i) Calcule a média, a mediana, o primeiro quartil, o terceiro quartil e os valores máximo e mínimo 
+    para a variável “renda total de todos os moradores, parentes e agregados no último mês”. Comente os resultados. '''
+    print("Questão I:")
     renda = buscaColuna(conteudo[0], "renda total de todos os moradores")
     colunaRenda = getMatrizColuna(conteudo, renda[0])
-    desvio = desvioPadrao(colunaRenda, False)
-    print(desvio)
+    #desvio = desvioPadrao(colunaRenda, False)
+    mediaRenda = getMedia(colunaRenda, False)
+    cr = colunaRenda.copy()
+    cr.pop(0)
+    medianaRenda = getMediana(cr)
+    print("Média de renda:",mediaRenda)
+    print("Mediana renda:", medianaRenda)
+    maxRenda = getMaior(colunaRenda)
+    minRenda = getMenor(colunaRenda)
+    print("Maior renda:", str(maxRenda)+",","menor renda:", minRenda)
+    q1 = quartil(cr, 1)
+    q2 = quartil(cr, 2)
+    q3 = quartil(cr, 3)
+    print("Primeiro quartil:", q1,"segundo quartil:", q2,"terceiro quartil", q3)
+
+    '''k) Crie uma função que calcule o coeficiente de variação. Resposta na linha 193
+    
+    l) Calcule o coeficiente de variação para a variável idade e renda. Compare os dois coeficientes devariação. '''
+    print("Questão L:")
+    deltaRenda = deltaV(cr)
+    deltaIdade = deltaV(ci)
+    print("Coeficiente de variação da idade:", str(deltaIdade)+'%'," Coeficiente de variação de renda:", str(deltaRenda)+'%')
+    #rotina pra calcular desvio padrão de cada região do país.
+
+    '''m) Calcule o desvio - padrão para a renda de acordo com cada região do Brasil. Qual é a região que possui um comportamento mais homogêneo em relação à renda?'''
+    print("Questão M:")
+    idReg = getDistinct(getMatrizColuna(conteudo, reg[0]))
+    dpReg = desvioRendaPorRegiao(conteudo, idReg)
+    x = dpReg[0][1]
+    nReg = ""
+    for i in range(len(dpReg)):
+        print("Região: ", dpReg[i][0]+',', "desvio padrão:", dpReg[i][1])
+        if dpReg[i][1] < x:
+            x = dpReg[i][1]
+            nReg = dpReg[i][0]
+    print("A região com o comportamento mais homogêneo é a", nReg+",", "com o desvio padrão de", x)
+    respostas.close()
 main()
